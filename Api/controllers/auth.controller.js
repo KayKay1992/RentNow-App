@@ -15,6 +15,6 @@ export const signUp = async(req, res, next) => {
     } catch (error) {
        next(error)
     }
-   
+
     
 }
