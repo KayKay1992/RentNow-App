@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
+import OAuth from '../components/OAuth'
 
 export default function SignUp() {
   // Handle form submission and input change events here
@@ -53,6 +54,7 @@ export default function SignUp() {
         <button disabled={loading} type='submit' className='bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80'>
           {loading ? 'Loading...' : 'Sign Up'}
         </button>
+        <OAuth/>
       </form>
       {/* Already have an account? */}
       <div  className='flex text-sm text-center gap-2 mt-5'>
