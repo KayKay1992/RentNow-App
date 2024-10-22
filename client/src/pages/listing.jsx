@@ -5,6 +5,8 @@ import SwiperCore from "swiper"
 import {Navigation} from "swiper/modules"
 import "swiper/css/bundle"
 import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare} from "react-icons/fa"
+import { useSelector } from "react-redux"
+import Contact from "../components/Contact"
 
 export default function Listing() {
     // Fetch listing data from API using the listingId parameter from the URL.
@@ -14,11 +16,14 @@ export default function Listing() {
     // Handle any errors that may occur during the fetch request.
     // Show appropriate error messages to the user.
     SwiperCore.use([Navigation])
+    const { currentUser } = useSelector((state) => state.user)
     const [listing, setListing] =useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(false)
     const [copied, setCopied] = useState(false)
+    const [contact, setContact] = useState(false)
     const params = useParams(); 
+    
    useEffect(() => {
     const fetchListing = async () => {
         try{
@@ -105,7 +110,12 @@ export default function Listing() {
                 {listing.furnished ? 'Furnished' : 'Not Furnished'} 
                 </l1>
 
+
              </ul>
+             {currentUser && listing.userRef !== currentUser._id && !contact &&(
+            <button onClick={()=>setContact(true)} className="bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 p-3">Contact Landlord</button>
+             )}
+            {contact && <Contact listing={listing}/>}
              </div>
             </>
         )}
