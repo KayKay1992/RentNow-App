@@ -188,7 +188,10 @@ export default function CreateListing() {
                         <input type="number" id="regularPrice"  required className='p-3 border border-gray-300 rounded-lg' min="1" onChange={handleChange} value={formData.regularPrice}/>
                         <div className="flex flex-col items-start">
                         <p>Regular Price</p>
+                       {formData.type === 'rent' && (
                         <span className='text-xs'>(# / Year)</span>
+                       )}
+                        
                         </div>  
                     </div>
                     {formData.offer &&  (
@@ -196,7 +199,10 @@ export default function CreateListing() {
                           <input type="number" id="discountPrice"  required className='p-3 border border-gray-300 rounded-lg' min="1"  onChange={handleChange} value={formData.discountPrice}/>
                           <div className="flex flex-col items-start">
                           <p>Discount Price</p>
+                          {formData.type ==='rent' && (
                           <span className='text-xs'>(# / Year)</span>
+                          )}
+                         
                             </div>  
                       </div>
                     )}
