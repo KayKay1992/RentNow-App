@@ -5,7 +5,7 @@ import { app } from "../firebase"
 import { useDispatch } from "react-redux"
 import {Link} from "react-router-dom"
 import { updateUserFailure, updateUserStart, updateUserSuccess, deleteUserSuccess , deleteUserStart, deleteUserFailure, signOutStart, signOutSuccess, signOutFailure} from "../redux/user/userSlice"
-
+import { useSelector } from "react-redux"
 export default function Profile() {
 
   const fileRef = useRef(null)

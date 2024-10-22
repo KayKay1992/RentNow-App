@@ -97,18 +97,18 @@ export default function Listing() {
                 <p>{listing.description}</p>
              </div>
              <ul className="flex flex-wrap whitespace-nowrap text-green-900 font-semibold text-sm gap-4 sm:gap-6 items-center">
-                <l1 className="flex items-center gap-1 "><FaBed className="text-lg "/>
+                <li className="flex items-center gap-1 "><FaBed className="text-lg "/>
                 {listing.bedrooms > 1 ? `${listing.bedrooms} beds` : `${listing.bedrooms} bed`}
-                </l1>
-                <l1 className="flex items-center gap-1 "><FaBath className="text-lg "/>
+                </li>
+                <li className="flex items-center gap-1 "><FaBath className="text-lg "/>
                 {listing.bathrooms > 1 ? `${listing.bathrooms} baths` : `${listing.bathrooms} bath`}
-                </l1>
-                <l1 className="flex items-center gap-1 "><FaParking className="text-lg "/>
+                </li>
+                <li className="flex items-center gap-1 "><FaParking className="text-lg "/>
                 {listing.parking  ? 'Parking' : 'No Parking'} 
-                </l1>
-                <l1 className="flex items-center gap-1 "><FaChair className="text-lg "/>
+                </li>
+                <li className="flex items-center gap-1 "><FaChair className="text-lg "/>
                 {listing.furnished ? 'Furnished' : 'Not Furnished'} 
-                </l1>
+                </li>
 
 
              </ul>
