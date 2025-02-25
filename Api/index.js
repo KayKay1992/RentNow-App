@@ -34,6 +34,24 @@ app.use("/api/user", userRouter)
 app.use("/api/auth", authRouter)
 app.use("/api/listing", listingRouter)
 
+//checking if the process.env.NODE_ENV === 'production'
+
+if (process.env.NODE_ENV === "production") {
+    // Serve static assets from the client/build folder in production mode
+    app.use(express.static(path.join(__dirname, "/client/dist")));
+  
+    // any route that is not api will be redirected to index.html
+    app.get("*", (req, res) => {
+      res.sendFile(path.resolve(__dirname, "client", "dist", "index.html"));
+    });
+  } else {
+    // Route to test if the API is running
+    app.get("/", (req, res) => {
+      res.send("Hello, World! My API is running");
+    });
+  }
+  
+
 
 
 app.use((err, req, res, next) =>{
