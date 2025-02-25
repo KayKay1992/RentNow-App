@@ -53,6 +53,10 @@ const listingSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    phone: {
+        type: Number,
+        // required: true
+    },
 
 
 }, {timestamps: true});

@@ -97,7 +97,7 @@ export default function Home() {
       <div className="">
         <div className="my-4">
           <h2 className='text-2xl font-semibold text-slate-600'>Recent Offers</h2>
-          <Link className='text-sm text-blue-800 hover:underline' to={'/search?offer=true'}>
+          <Link className='text-lg text-blue-800 hover:underline' to={'/search?offer=true'}>
           Show more offers...
           </Link>
         </div>
@@ -115,7 +115,7 @@ export default function Home() {
       <div className="">
         <div className="my-4">
           <h2 className='text-2xl font-semibold text-slate-600'>Recent Places for Rent</h2>
-          <Link className='text-sm text-blue-800 hover:underline' to={'/search?type=rent'}>
+          <Link className='text-lg text-blue-800 hover:underline' to={'/search?type=rent'}>
           Show more places for rent...
           </Link>
         </div>
@@ -133,7 +133,7 @@ export default function Home() {
       <div className="">
         <div className="my-4">
           <h2 className='text-2xl font-semibold text-slate-600'>Recent places for sale</h2>
-          <Link className='text-sm text-blue-800 hover:underline' to={'/search?type=sale'}>
+          <Link className='text-lg text-blue-800 hover:underline' to={'/search?type=sale'}>
           Show more places for sale...
           </Link>
         </div>

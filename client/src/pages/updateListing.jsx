@@ -11,7 +11,7 @@ export default function CreateListing() {
     const params = useParams();
     const [files, setFiles] = useState([])
     const [formData, setFormData] = useState({
-        imageUrls: [], name: '', description: '', address: '',
+        imageUrls: [], name: '', description: '', address: '', phone: '',
         type: 'rent', bedrooms: 1, bathrooms: 1 , regularPrice: 0, discountPrice: 0, offer: false, parking: false, furnished: false,
     });
     const [imageUploadError, setImageUploadError] = useState(false);
@@ -151,6 +151,7 @@ export default function CreateListing() {
             <div className='flex flex-col gap-4 flex-1'>
                 {/* Form fields */}
                 <input type='text' placeholder='Name' className='border p-3 rounded-lg' id='name' maxLength='62' required  onChange={handleChange} value={formData.name}/>
+                <input type='number' placeholder='please enter phone number' className='border p-3 rounded-lg' id='phone' required  onChange={handleChange} value={formData.phone}/>
                 <textarea type='text' placeholder='Description' className='border p-3 rounded-lg' id='description' required onChange={handleChange} value={formData.description} />
                 <input type='text' placeholder='Address' className='border p-3 rounded-lg' id='address'  required onChange={handleChange} value={formData.address}/>
                 <div className="flex gap-6 flex-wrap">
