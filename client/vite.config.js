@@ -11,11 +11,6 @@ export default defineConfig({
     },
   },
   plugins: [react()],
-  resolve: {
-    alias: {
-      '@firebase/auth': 'node_modules/@firebase/auth/dist/index.esm.js', // Point to the correct file
-    },
-  },
   build: {
     outDir: 'dist',
     chunkSizeWarningLimit: 1000,
