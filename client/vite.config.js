@@ -11,20 +11,13 @@ export default defineConfig({
     },
   },
   plugins: [react()],
-  build: {
-    outDir: 'build', // Use a shorter output directory
-    chunkSizeWarningLimit: 1000, // Optional: Adjust chunk size warning limit
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'], // Optional: Split vendor chunks
-        },
-      },
-    },
-  },
   resolve: {
     alias: {
-      '@firebase/auth': 'node_modules/@firebase/auth', // Shorten the path for Firebase
+      '@firebase/auth': 'node_modules/@firebase/auth/dist/index.esm.js', // Point to the correct file
     },
+  },
+  build: {
+    outDir: 'dist',
+    chunkSizeWarningLimit: 1000,
   },
 });
