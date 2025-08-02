@@ -1,1 +1,1 @@
-export const backendUrl = 'https://rent-now-app-r2qe.vercel.app/api'
+export const backendUrl = 'https://rent-now-app-r2qe.vercel.app/'
