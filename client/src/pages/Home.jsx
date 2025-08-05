@@ -22,16 +22,27 @@ export default function Home() {
 
   useEffect(() => {
     // Fetch offer listings
-    const fetchOfferListings = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/listing/get?offer=true&limit=4`);
-        const data = await res.json();
-        setOfferListings(data);
-        fetchRentListings()
-      } catch (error) {
-        console.log(error);
+  // Update your fetch calls to include credentials and headers:
+const fetchOfferListings = async () => {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/listing/get?offer=true&limit=4`, {
+      method: 'GET',
+    // If using cookies
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       }
-    };
+    });
+    
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    
+    const data = await res.json();
+    setOfferListings(data);
+    fetchRentListings();
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+};
     const fetchRentListings = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/listing/get?type=rent&limit=4`);
