@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import path from "path";
+import cors from "cors";
 
 // Import routes
 import userRouter from "./routes/user.route.js";
@@ -16,6 +17,7 @@ const __dirname = path.resolve();
 
 const app = express();
 
+app.use(cors()); // Add CORS for frontend requests
 app.use(express.json());
 app.use(cookieParser());
 
@@ -55,3 +57,5 @@ mongoose
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+export default app; // Add this for Vercel
