@@ -22,11 +22,10 @@ const allowedOrigins = [
   "http://localhost:3000"
 ];
 
-// ✅ Unified CORS configuration
+// ✅ Use CORS middleware for all routes
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (e.g., mobile apps, curl)
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // allow requests with no origin
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
@@ -38,11 +37,14 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 }));
 
-// ✅ Explicitly handle preflight for all routes
-app.options("*", cors({
-  origin: allowedOrigins,
-  credentials: true
-}));
+// ✅ Explicit OPTIONS handler (works locally + on Vercel)
+app.options("*", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes(req.headers.origin) ? req.headers.origin : "");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Accept, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  return res.sendStatus(200);
+});
 
 // Middleware
 app.use(express.json());
@@ -82,7 +84,7 @@ mongoose
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => console.log("❌ MongoDB connection error:", err));
 
-// Start server (for local dev — Vercel ignores this on deployment)
+// Start server (local only — Vercel will handle serverless execution)
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
