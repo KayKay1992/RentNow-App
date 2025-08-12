@@ -12,19 +12,39 @@ import listingRouter from "./routes/listing.route.js";
 
 dotenv.config();
 
+const port = process.env.PORT || 3000;
 const __dirname = path.resolve();
-
 const app = express();
 
-// CORS configuration (move to top and use only this)
+// Allowed origins
+const allowedOrigins = [
+  "https://rent-now-app-inl2-client.vercel.app",
+  "http://localhost:3000"
+];
+
+// ✅ Unified CORS configuration
 app.use(cors({
-  origin: ['https://rent-now-app-inl2-client.vercel.app', 'http://localhost:3000'], // Array for multiple origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (e.g., mobile apps, curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+}));
+
+// ✅ Explicitly handle preflight for all routes
+app.options("*", cors({
+  origin: allowedOrigins,
   credentials: true
 }));
 
-// Other middleware
+// Middleware
 app.use(express.json());
 app.use(cookieParser());
 
@@ -33,7 +53,7 @@ app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/listing", listingRouter);
 
-// Serve static assets in production (remove if client is deployed separately and this API repo lacks client/dist)
+// Serve static assets in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "client/dist")));
   app.get("*", (req, res) => {
@@ -56,13 +76,15 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Database connection (runs on startup)
+// Database connection
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.log(err));
+  .then(() => console.log("✅ Connected to MongoDB"))
+  .catch((err) => console.log("❌ MongoDB connection error:", err));
 
-// Remove app.listen entirely for Vercel compatibility
-// For local development, create a separate server.js file with: app.listen(3000, () => console.log('Server running'));
+// Start server (for local dev — Vercel ignores this on deployment)
+app.listen(port, () => {
+  console.log(`🚀 Server running on port ${port}`);
+});
 
 export default app;
