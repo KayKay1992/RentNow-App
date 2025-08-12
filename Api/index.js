@@ -12,37 +12,15 @@ import listingRouter from "./routes/listing.route.js";
 
 dotenv.config();
 
-const port = process.env.PORT || 3000;
 const __dirname = path.resolve();
 
 const app = express();
 
-// 1. Configure CORS with explicit headers
-const allowedOrigins = [
-  'https://rent-now-app-inl2-client.vercel.app',
-  'http://localhost:3000'
-];
-
-// 2. Enhanced CORS middleware
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
-// 3. Regular CORS as fallback
+// CORS configuration (move to top and use only this)
 app.use(cors({
-  origin: allowedOrigins,
+  origin: ['https://rent-now-app-inl2-client.vercel.app', 'http://localhost:3000'], // Array for multiple origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true
 }));
 
@@ -55,7 +33,7 @@ app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/listing", listingRouter);
 
-// Serve static assets in production
+// Serve static assets in production (remove if client is deployed separately and this API repo lacks client/dist)
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "client/dist")));
   app.get("*", (req, res) => {
@@ -78,15 +56,13 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Database connection
+// Database connection (runs on startup)
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.log(err));
 
-// Start server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// Remove app.listen entirely for Vercel compatibility
+// For local development, create a separate server.js file with: app.listen(3000, () => console.log('Server running'));
 
 export default app;
