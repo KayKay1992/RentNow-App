@@ -22,29 +22,23 @@ const allowedOrigins = [
   "http://localhost:3000"
 ];
 
-// ✅ Use CORS middleware for all routes
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // allow requests with no origin
+// ✅ CORS middleware
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow requests like Postman
     if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
+      return callback(null, origin); // ✅ reflect exact origin in header
     } else {
       return callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
-}));
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+};
 
-// ✅ Explicit OPTIONS handler (works locally + on Vercel)
-app.options("*", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes(req.headers.origin) ? req.headers.origin : "");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Accept, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  return res.sendStatus(200);
-});
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // ✅ handle preflight requests
 
 // Middleware
 app.use(express.json());
@@ -84,9 +78,11 @@ mongoose
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => console.log("❌ MongoDB connection error:", err));
 
-// Start server (local only — Vercel will handle serverless execution)
-app.listen(port, () => {
-  console.log(`🚀 Server running on port ${port}`);
-});
+// Start server (local only — Vercel runs serverless functions)
+if (process.env.NODE_ENV !== "production") {
+  app.listen(port, () => {
+    console.log(`🚀 Server running on port ${port}`);
+  });
+}
 
 export default app;
