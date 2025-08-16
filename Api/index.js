@@ -20,7 +20,7 @@ app.use(cookieParser());
 // CORS setup (for your deployed frontend)
 app.use(
   cors({
-    origin: "https://rent-now-app-inl2-client.vercel.app", // your client URL
+    origin: "https://rent-now-app-inl2-client.vercel.app", // client URL
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -45,9 +45,12 @@ app.use((err, req, res, next) => {
 
 // Database connection
 mongoose
-  .connect(process.env.MONGO)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error(err));
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB error:", err));
 
 // Vercel requires a default export of the server (not listen)
 export default app;
