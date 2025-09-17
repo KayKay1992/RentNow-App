@@ -17,10 +17,10 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS setup (for your deployed frontend)
+// CORS setup (update origin as needed)
 app.use(
   cors({
-    origin: "https://rent-now-app-inl2-client.vercel.app", // client URL
+    origin: process.env.CLIENT_URL || "http://localhost:5173", // Use environment variable or local frontend URL
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -52,5 +52,6 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB error:", err));
 
-// Vercel requires a default export of the server (not listen)
-export default app;
+// Start the server
+const PORT = process.env.PORT || 3000; // Use Render's PORT or fallback to 3000
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
