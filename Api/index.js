@@ -26,7 +26,6 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow requests with no origin (like mobile apps, curl, Postman)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -41,13 +40,13 @@ app.use(
 
 // Root route (for testing)
 app.get("/", (req, res) => {
-  res.send("Backend API is running ✅");
+  res.send("✅ Backend API is running");
 });
 
-// Routes
-app.use("/Api/listing", listingRouter);
-app.use("/Api/user", userRouter);
-app.use("/Api/auth", authRouter);
+// ✅ Routes (lowercase to match frontend calls)
+app.use("/api/listing", listingRouter);
+app.use("/api/user", userRouter);
+app.use("/api/auth", authRouter);
 
 // Error handler middleware
 app.use((err, req, res, next) => {
@@ -67,5 +66,5 @@ mongoose
   .catch((err) => console.error("❌ MongoDB error:", err));
 
 // Start the server
-const PORT = process.env.PORT || 3000; // Use Render's PORT or fallback
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
