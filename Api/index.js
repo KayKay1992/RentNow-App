@@ -26,10 +26,12 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      console.log(`CORS Origin: ${origin}`); // Debug log
+      console.log(`CORS: Request from ${origin}`); // Debug log
       if (!origin || allowedOrigins.includes(origin)) {
+        console.log(`CORS: Allowing origin ${origin}`);
         callback(null, true);
       } else {
+        console.log(`CORS: Blocking origin ${origin}`);
         callback(new Error(`CORS blocked: ${origin} not allowed`));
       }
     },
@@ -39,7 +41,7 @@ app.use(
   })
 );
 
-// Log all requests for debugging
+// Log all requests
 app.use((req, res, next) => {
   console.log(`Request: ${req.method} ${req.url} from ${req.get("origin")}`);
   next();
@@ -50,6 +52,17 @@ app.get("/", (req, res) => {
   res.send("✅ Backend API is running");
 });
 
+// Test DB route
+app.get("/test-db", async (req, res) => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    res.status(200).json({ message: "MongoDB connected successfully" });
+  } catch (error) {
+    console.error("MongoDB test error:", error);
+    res.status(500).json({ message: "MongoDB connection failed", error: error.message });
+  }
+});
+
 // Routes
 app.use("/api/listing", listingRouter);
 app.use("/api/user", userRouter);
@@ -57,7 +70,7 @@ app.use("/api/auth", authRouter);
 
 // Error handler middleware
 app.use((err, req, res, next) => {
-  console.error(`Error: ${err.message}`); // Log errors for debugging
+  console.error(`Error: ${err.message}, Path: ${req.path}, Origin: ${req.get("origin")}`);
   const statusCode = err.statusCode || 500;
   const message = err.message || "Internal Server Error";
   return res.status(statusCode).json({
