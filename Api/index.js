@@ -45,9 +45,9 @@ app.get("/", (req, res) => {
 });
 
 // Routes
-app.use("/api/listing", listingRouter);
-app.use("/api/user", userRouter);
-app.use("/api/auth", authRouter);
+app.use("/Api/listing", listingRouter);
+app.use("/Api/user", userRouter);
+app.use("/Api/auth", authRouter);
 
 // Error handler middleware
 app.use((err, req, res, next) => {
