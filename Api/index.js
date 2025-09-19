@@ -17,19 +17,20 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ CORS setup (support localhost + deployed frontend)
+// CORS setup
 const allowedOrigins = [
-  process.env.CLIENT_URL,         // your deployed frontend on Render
-  "http://localhost:5173",        // local dev frontend
+  process.env.CLIENT_URL || "https://rentnow-d4su.onrender.com", // Fallback to deployed frontend
+  "http://localhost:5173", // Local dev frontend
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
+      console.log(`CORS Origin: ${origin}`); // Debug log
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        callback(new Error(`CORS blocked: ${origin} not allowed`));
       }
     },
     credentials: true,
@@ -38,18 +39,25 @@ app.use(
   })
 );
 
-// Root route (for testing)
+// Log all requests for debugging
+app.use((req, res, next) => {
+  console.log(`Request: ${req.method} ${req.url} from ${req.get("origin")}`);
+  next();
+});
+
+// Root route
 app.get("/", (req, res) => {
   res.send("✅ Backend API is running");
 });
 
-// ✅ Routes (lowercase to match frontend calls)
+// Routes
 app.use("/api/listing", listingRouter);
 app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
 
 // Error handler middleware
 app.use((err, req, res, next) => {
+  console.error(`Error: ${err.message}`); // Log errors for debugging
   const statusCode = err.statusCode || 500;
   const message = err.message || "Internal Server Error";
   return res.status(statusCode).json({
