@@ -1,13 +1,13 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react-swc'
 
 export default defineConfig({
   server: {
     proxy: {
-      '/api': {
-        target: 'http://localhost:3000', // Local backend URL
+      '/Api': {
+        target: 'http://localhost:3000', // local backend during dev
         changeOrigin: true,
-        secure: false, // Set to false for local HTTP
+        secure: false,
       },
     },
   },
@@ -16,4 +16,9 @@ export default defineConfig({
     outDir: 'dist',
     chunkSizeWarningLimit: 1000,
   },
-});
+  define: {
+    'process.env.VITE_API_BASE_URL': JSON.stringify(
+      process.env.VITE_API_BASE_URL || 'https://rentnow-backend-snn3.onrender.com'
+    ),
+  },
+})

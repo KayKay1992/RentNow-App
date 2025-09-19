@@ -17,15 +17,32 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS setup (update origin as needed)
+// ✅ CORS setup (support localhost + deployed frontend)
+const allowedOrigins = [
+  process.env.CLIENT_URL,         // your deployed frontend on Render
+  "http://localhost:5173",        // local dev frontend
+];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173", // Use environment variable or local frontend URL
+    origin: (origin, callback) => {
+      // allow requests with no origin (like mobile apps, curl, Postman)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
   })
 );
+
+// Root route (for testing)
+app.get("/", (req, res) => {
+  res.send("Backend API is running ✅");
+});
 
 // Routes
 app.use("/api/listing", listingRouter);
@@ -45,13 +62,10 @@ app.use((err, req, res, next) => {
 
 // Database connection
 mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB error:", err));
 
 // Start the server
-const PORT = process.env.PORT || 3000; // Use Render's PORT or fallback to 3000
+const PORT = process.env.PORT || 3000; // Use Render's PORT or fallback
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
