@@ -5,20 +5,36 @@ import {errorHandler} from "../utils/error.js";
 
 
 export const signUp = async(req, res, next) => {
-    // Implement user registration logic here
-    const {username, email, password} = req.body;
-    const hashedPassword = bcryptjs.hashSync(password,10)
-    const newUser = new User({username, email, password:hashedPassword})
-   
-    // Return a success message to the client
-    try {
-        await newUser.save();
-    res.status(201).json( "User registered successfully!");
-    } catch (error) {
-       next(error)
+    const {username, email, password, phone} = req.body; // Add phone here
+    
+    // Validate required fields
+    if (!username || !email || !password) {
+        return next(errorHandler(400, "Username, email, and password are required"));
     }
 
-    
+    try {
+        const hashedPassword = bcryptjs.hashSync(password, 10);
+        const newUser = new User({
+            username, 
+            email, 
+            password: hashedPassword,
+            phone: phone || "" // Handle phone field
+        });
+   
+        await newUser.save();
+        res.status(201).json({ 
+            success: true,
+            message: "User registered successfully!",
+            user: {
+                id: newUser._id,
+                username: newUser.username,
+                email: newUser.email,
+                phone: newUser.phone
+            }
+        });
+    } catch (error) {
+       next(error);
+    }
 }
 
 export const signIn = async(req, res, next) => {
