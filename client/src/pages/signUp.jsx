@@ -14,34 +14,55 @@ export default function SignUp() {
   const handleChange = (e) => {
     setFormData({...formData, [e.target.id]: e.target.value })
   }
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  try {
+    setLoading(true);
+    setError(null);
 
-    try{
-      e.preventDefault();
-      // Perform form validation and submit the form data to the server here
-      setLoading(true);
-      const res = await fetch('/api/auth/signUp',
-        {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(formData)
-        }
-      );
-      const data = await  res.json();
-      console.log(data);
-      if(data.success === false) {
-        setLoading(false);
-        setError(data.message);
-        return;
-      }
-      setLoading(false)
-      setError(null)
-      navigate('/signIn')
-    }catch(error) {
+    // Basic validation
+    if (!formData.username || !formData.email || !formData.password) {
+      setError('Please fill in all required fields');
       setLoading(false);
-      setError(error.message);
+      return;
     }
-   
+
+    const res = await fetch('/api/auth/signup', { // Note: lowercase 'signup'
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(formData)
+    });
+
+    // Check if response is OK
+    if (!res.ok) {
+      const errorText = await res.text();
+      try {
+        const errorData = JSON.parse(errorText);
+        throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+      } catch {
+        throw new Error(errorText || `HTTP error! status: ${res.status}`);
+      }
+    }
+
+    const data = await res.json();
+    console.log('Signup success:', data);
+    
+    if (data.success === false) {
+      setError(data.message);
+      setLoading(false);
+      return;
+    }
+    
+    setLoading(false);
+    setError(null);
+    navigate('/signin'); // Note: lowercase 'signin'
+    
+  } catch(error) {
+    setLoading(false);
+    setError(error.message || 'Something went wrong during signup');
+    console.error('Signup error:', error);
+  }
   }
   return (
     <div className='p-3 max-w-lg mx-auto'>
