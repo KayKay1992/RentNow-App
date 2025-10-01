@@ -16,9 +16,5 @@ export default defineConfig({
     outDir: 'dist',
     chunkSizeWarningLimit: 1000,
   },
-  define: {
-    'process.env.VITE_API_BASE_URL': JSON.stringify(
-      process.env.VITE_API_BASE_URL || 'https://rentnow-backend-snn3.onrender.com'
-    ),
-  },
+  
 })
