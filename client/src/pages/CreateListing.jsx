@@ -3,11 +3,12 @@ import { getDownloadURL, getStorage, ref, uploadBytesResumable } from "firebase/
 import { app } from "../firebase";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../server";  // ✅ import base URL
 
 export default function CreateListing() {
+  const API_BASE = import.meta.env.VITE_API_BASE_URL; // ✅ use env variable
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
+
   const [files, setFiles] = useState([]);
   const [formData, setFormData] = useState({
     imageUrls: [],
@@ -30,14 +31,12 @@ export default function CreateListing() {
   const [loading, setLoading] = useState(false);
 
   // ✅ Upload images to Firebase
-  const handleImageSubmit = (e) => {
-    if (files.length > 0 && files.length + formData.imageUrls.length < 11) {
+  const handleImageSubmit = () => {
+    if (files.length > 0 && files.length + formData.imageUrls.length <= 10) {
       setUploading(true);
       setImageUploadError(false);
-      const promises = [];
-      for (let i = 0; i < files.length; i++) {
-        promises.push(storeImage(files[i]));
-      }
+      const promises = files.map((file) => storeImage(file));
+
       Promise.all(promises)
         .then((urls) => {
           setFormData({ ...formData, imageUrls: formData.imageUrls.concat(urls) });
@@ -53,20 +52,19 @@ export default function CreateListing() {
     }
   };
 
-  const storeImage = async (file) => {
+  const storeImage = (file) => {
     return new Promise((resolve, reject) => {
       const storage = getStorage(app);
       const fileName = new Date().getTime() + file.name;
       const storageRef = ref(storage, fileName);
       const uploadTask = uploadBytesResumable(storageRef, file);
+
       uploadTask.on(
         "state_changed",
         () => {},
         (error) => reject(error),
         () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            resolve(downloadURL);
-          });
+          getDownloadURL(uploadTask.snapshot.ref).then(resolve);
         }
       );
     });
@@ -82,11 +80,9 @@ export default function CreateListing() {
   const handleChange = (e) => {
     if (e.target.id === "sale" || e.target.id === "rent") {
       setFormData({ ...formData, type: e.target.id });
-    }
-    if (["parking", "furnished", "offer"].includes(e.target.id)) {
+    } else if (["parking", "furnished", "offer"].includes(e.target.id)) {
       setFormData({ ...formData, [e.target.id]: e.target.checked });
-    }
-    if (["number", "text", "textarea"].includes(e.target.type)) {
+    } else {
       setFormData({ ...formData, [e.target.id]: e.target.value });
     }
   };
@@ -94,22 +90,19 @@ export default function CreateListing() {
   // ✅ Submit listing
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.imageUrls.length < 1) return setError("Please upload at least one image");
+    if (+formData.discountPrice > +formData.regularPrice)
+      return setError("Discount price should be less than regular price");
+
+    setLoading(true);
+    setError(false);
+
     try {
-      if (formData.imageUrls.length < 1) return setError("Please upload at least one image");
-      if (+formData.regularPrice < +formData.discountPrice)
-        return setError("Discount price should be less than regular price");
-
-      setLoading(true);
-      setError(false);
-
-      const res = await fetch(`${API_BASE_URL}/api/listing/create`, {
+      const res = await fetch(`${API_BASE}/api/listing/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          userRef: currentUser._id,
-        }),
-        credentials: "include", // ✅ important if backend sets cookies
+        credentials: "include", // ✅ include cookies if backend uses them
+        body: JSON.stringify({ ...formData, userRef: currentUser._id }),
       });
 
       const data = await res.json();
@@ -130,21 +123,162 @@ export default function CreateListing() {
   return (
     <main className="p-3 max-w-4xl mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">Create a Listing</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4">
-        {/* form fields remain unchanged (your JSX stays same)... */}
 
-        {/* ✅ Submit button */}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* Images Upload Section */}
+        <input
+          type="file"
+          multiple
+          onChange={(e) => setFiles([...e.target.files])}
+          accept="image/*"
+        />
         <button
+          type="button"
+          onClick={handleImageSubmit}
+          className="p-2 bg-blue-600 text-white rounded-lg hover:opacity-90"
+          disabled={uploading}
+        >
+          {uploading ? "Uploading..." : "Upload Images"}
+        </button>
+        {imageUploadError && <p className="text-red-700">{imageUploadError}</p>}
+        <div className="flex gap-2 flex-wrap">
+          {formData.imageUrls.map((url, i) => (
+            <div key={i} className="relative">
+              <img src={url} alt={`listing-${i}`} className="h-20 w-20 object-cover rounded" />
+              <button
+                type="button"
+                onClick={() => handleDeleteImage(i)}
+                className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1"
+              >
+                X
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Listing Info Fields */}
+        <input
+          type="text"
+          id="name"
+          placeholder="Listing Name"
+          value={formData.name}
+          onChange={handleChange}
+          className="border p-3 rounded-lg"
+          required
+        />
+        <textarea
+          id="description"
+          placeholder="Description"
+          value={formData.description}
+          onChange={handleChange}
+          className="border p-3 rounded-lg"
+          required
+        />
+        <input
+          type="text"
+          id="address"
+          placeholder="Address"
+          value={formData.address}
+          onChange={handleChange}
+          className="border p-3 rounded-lg"
+          required
+        />
+        <input
+          type="text"
+          id="phone"
+          placeholder="Phone Number"
+          value={formData.phone}
+          onChange={handleChange}
+          className="border p-3 rounded-lg"
+          required
+        />
+        <div className="flex gap-2">
+          <label>
+            <input
+              type="radio"
+              id="rent"
+              checked={formData.type === "rent"}
+              onChange={handleChange}
+            />
+            Rent
+          </label>
+          <label>
+            <input
+              type="radio"
+              id="sale"
+              checked={formData.type === "sale"}
+              onChange={handleChange}
+            />
+            Sale
+          </label>
+        </div>
+        <div className="flex gap-2">
+          <label>
+            <input type="checkbox" id="parking" checked={formData.parking} onChange={handleChange} />
+            Parking
+          </label>
+          <label>
+            <input type="checkbox" id="furnished" checked={formData.furnished} onChange={handleChange} />
+            Furnished
+          </label>
+          <label>
+            <input type="checkbox" id="offer" checked={formData.offer} onChange={handleChange} />
+            Offer
+          </label>
+        </div>
+        <input
+          type="number"
+          id="bedrooms"
+          placeholder="Bedrooms"
+          value={formData.bedrooms}
+          onChange={handleChange}
+          className="border p-3 rounded-lg"
+          min={1}
+        />
+        <input
+          type="number"
+          id="bathrooms"
+          placeholder="Bathrooms"
+          value={formData.bathrooms}
+          onChange={handleChange}
+          className="border p-3 rounded-lg"
+          min={1}
+        />
+        <input
+          type="number"
+          id="regularPrice"
+          placeholder="Regular Price"
+          value={formData.regularPrice}
+          onChange={handleChange}
+          className="border p-3 rounded-lg"
+          min={0}
+        />
+        {formData.offer && (
+          <input
+            type="number"
+            id="discountPrice"
+            placeholder="Discount Price"
+            value={formData.discountPrice}
+            onChange={handleChange}
+            className="border p-3 rounded-lg"
+            min={0}
+          />
+        )}
+
+        <button
+          type="submit"
           disabled={loading || uploading}
           className="p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
         >
           {loading ? "Creating..." : "Create Listing"}
         </button>
-        {error && <p className="text-sm text-red-700">{error}</p>}
+
+        {error && <p className="text-red-700 mt-2">{error}</p>}
       </form>
     </main>
   );
 }
+
 
 
 // import { useState } from "react";

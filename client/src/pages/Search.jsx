@@ -511,7 +511,7 @@ export default function Search() {
       setLoading(true);
       setShowMore(false);
       const searchQuery = urlparams.toString();
-      const res = await fetch(`${API_BASE}/listing/get?${searchQuery}`);
+      const res = await fetch(`${API_BASE}/api/listing/get?${searchQuery}`);
       const data = await res.json();
       setListings(data);
       setShowMore(data.length > 8);
@@ -553,7 +553,7 @@ export default function Search() {
     const startIndex = listings.length;
     const urlparams = new URLSearchParams(location.search);
     urlparams.set("startIndex", startIndex);
-    const res = await fetch(`${API_BASE}/listing/get?${urlparams.toString()}`);
+    const res = await fetch(`${API_BASE}/api/listing/get?${urlparams.toString()}`);
     const data = await res.json();
     setListings([...listings, ...data]);
     if (data.length < 9) setShowMore(false);
