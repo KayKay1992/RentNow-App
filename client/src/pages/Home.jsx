@@ -199,7 +199,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css/bundle";
-import { Navigation } from "swiper/modules";
+import { Navigation, Autoplay } from "swiper/modules";
 import SwiperCore from "swiper";
 import ListingItem from "../components/ListingItem";
 import { API_BASE_URL } from "../server";
@@ -209,7 +209,7 @@ export default function Home() {
   const [saleListings, setSaleListings] = useState([]);
   const [rentListings, setRentListings] = useState([]);
 
-  SwiperCore.use([Navigation]);
+  SwiperCore.use([Navigation, Autoplay]);
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -243,23 +243,16 @@ export default function Home() {
 
   return (
     <div>
-      {/* top */}
+      {/* Hero Section */}
       <div className="flex flex-col gap-6 p-20 px-3 max-w-6xl mx-auto">
         <h1 className="text-slate-700 font-bold text-3xl lg:text-6xl ">
           Find your next <span className="text-slate-500">perfect</span> <br />
-          place with ease{" "}
+          place with ease
         </h1>
         <div className="text-gray-500 text-xs sm:text-sm">
           Introducing our innovative real estate app, designed to simplify <br />
           your property search and streamline your buying or renting
-          experience. With a user-friendly interface, <br /> advanced filters,
-          and comprehensive listings, you can easily discover homes <br /> that
-          match your needs and preferences. Whether you’re a first-time buyer,{" "}
-          <br />
-          seasoned investor, or looking for a rental, our app provides valuable{" "}
-          <br />
-          insights, market trends, and direct access to agents. Unlock your
-          dream home with just a few taps!
+          experience...
         </div>
 
         <Link
@@ -271,27 +264,37 @@ export default function Home() {
       </div>
 
       {/* Swiper */}
-      <Swiper navigation>
+      <Swiper
+        navigation
+        autoplay={{ delay: 3000, disableOnInteraction: false }} // ✅ Auto swipe
+        loop={true} // ✅ infinite loop
+      >
         {offerListings &&
           offerListings.length > 0 &&
-          offerListings.map((listing) => (
-            <SwiperSlide key={listing._id}>
-              <div
-                style={{
-                  background: `url(${listing.imageUrls[0]}) center no-repeat`,
-                  backgroundSize: "cover",
-                }}
-                className="h-[500px]"
-              ></div>
-            </SwiperSlide>
-          ))}
+          offerListings.map((listing) => {
+            // ✅ fallback: if first image is missing, use the second one
+            const imageUrl =
+              listing.imageUrls[0] || listing.imageUrls[1] || "/fallback.jpg";
+
+            return (
+              <SwiperSlide key={listing._id}>
+                <div
+                  style={{
+                    background: `url(${imageUrl}) center no-repeat`,
+                    backgroundSize: "cover",
+                  }}
+                  className="h-[500px]"
+                ></div>
+              </SwiperSlide>
+            );
+          })}
       </Swiper>
 
       {/* Offer listings */}
       <div className="max-w-7xl mx-auto p-3 flex flex-col gap-8 my-10">
         {offerListings.length > 0 && (
           <div>
-            <div className="my-4">
+            <div className="my-4 flex justify-between items-center">
               <h2 className="text-2xl font-semibold text-slate-600">
                 Recent Offers
               </h2>
@@ -315,7 +318,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto p-3 flex flex-col gap-8 my-10">
         {rentListings.length > 0 && (
           <div>
-            <div className="my-4">
+            <div className="my-4 flex justify-between items-center">
               <h2 className="text-2xl font-semibold text-slate-600">
                 Recent Places for Rent
               </h2>
@@ -339,9 +342,9 @@ export default function Home() {
       <div className="max-w-7xl mx-auto p-3 flex flex-col gap-8 my-10">
         {saleListings.length > 0 && (
           <div>
-            <div className="my-4">
+            <div className="my-4 flex justify-between items-center">
               <h2 className="text-2xl font-semibold text-slate-600">
-                Recent places for sale
+                Recent Places for Sale
               </h2>
               <Link
                 className="text-lg text-blue-800 hover:underline"

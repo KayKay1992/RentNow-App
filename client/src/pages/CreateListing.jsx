@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { getDownloadURL, getStorage, ref, uploadBytesResumable } from "firebase/storage";
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
 import { app } from "../firebase";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 export default function CreateListing() {
-  const API_BASE = import.meta.env.VITE_API_BASE_URL; // ✅ use env variable
+  const API_BASE = import.meta.env.VITE_API_BASE_URL;
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
 
@@ -25,30 +30,31 @@ export default function CreateListing() {
     parking: false,
     furnished: false,
   });
-  const [imageUploadError, setImageUploadError] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Upload images to Firebase
+  // 🔹 Upload Images to Firebase
   const handleImageSubmit = () => {
     if (files.length > 0 && files.length + formData.imageUrls.length <= 10) {
       setUploading(true);
-      setImageUploadError(false);
+      setImageUploadError("");
       const promises = files.map((file) => storeImage(file));
-
       Promise.all(promises)
         .then((urls) => {
-          setFormData({ ...formData, imageUrls: formData.imageUrls.concat(urls) });
+          setFormData((prev) => ({
+            ...prev,
+            imageUrls: [...prev.imageUrls, ...urls],
+          }));
           setUploading(false);
         })
         .catch(() => {
-          setImageUploadError("Image upload failed (2mb max per image)");
+          setImageUploadError("❌ Upload failed (Max 2MB per image).");
           setUploading(false);
         });
     } else {
-      setImageUploadError("Maximum 10 images can be uploaded");
-      setUploading(false);
+      setImageUploadError("❌ Max 10 images allowed.");
     }
   };
 
@@ -61,57 +67,58 @@ export default function CreateListing() {
 
       uploadTask.on(
         "state_changed",
-        () => {},
-        (error) => reject(error),
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then(resolve);
-        }
+        null,
+        reject,
+        () => getDownloadURL(uploadTask.snapshot.ref).then(resolve)
       );
     });
   };
 
-  const handleDeleteImage = (index) => {
-    setFormData({
-      ...formData,
-      imageUrls: formData.imageUrls.filter((_, i) => i !== index),
-    });
+  // 🔹 Delete uploaded image from preview
+  const handleDeleteImage = (i) => {
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((_, index) => index !== i),
+    }));
   };
 
+  // 🔹 Handle input changes
   const handleChange = (e) => {
-    if (e.target.id === "sale" || e.target.id === "rent") {
-      setFormData({ ...formData, type: e.target.id });
-    } else if (["parking", "furnished", "offer"].includes(e.target.id)) {
-      setFormData({ ...formData, [e.target.id]: e.target.checked });
+    const { id, value, checked } = e.target;
+    if (id === "sale" || id === "rent") {
+      setFormData((prev) => ({ ...prev, type: id }));
+    } else if (["parking", "furnished", "offer"].includes(id)) {
+      setFormData((prev) => ({ ...prev, [id]: checked }));
     } else {
-      setFormData({ ...formData, [e.target.id]: e.target.value });
+      setFormData((prev) => ({ ...prev, [id]: value }));
     }
   };
 
-  // ✅ Submit listing
+  // 🔹 Handle form submit with fixed auth
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.imageUrls.length < 1) return setError("Please upload at least one image");
+    if (formData.imageUrls.length < 1)
+      return setError("⚠️ Upload at least one image.");
     if (+formData.discountPrice > +formData.regularPrice)
-      return setError("Discount price should be less than regular price");
+      return setError("⚠️ Discount price must be less than regular price.");
 
     setLoading(true);
-    setError(false);
+    setError("");
 
     try {
       const res = await fetch(`${API_BASE}/api/listing/create`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // ✅ include cookies if backend uses them
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // ✅ FIX: send cookies with request
         body: JSON.stringify({ ...formData, userRef: currentUser._id }),
       });
 
       const data = await res.json();
       setLoading(false);
 
-      if (data.success === false) {
-        setError(data.message);
-        return;
-      }
+      if (data.success === false) return setError(data.message);
 
       navigate(`/listing/${data._id}`);
     } catch (err) {
@@ -121,49 +128,59 @@ export default function CreateListing() {
   };
 
   return (
-    <main className="p-3 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-semibold text-center my-7">Create a Listing</h1>
+    <main className="p-6 max-w-3xl mx-auto">
+      <h1 className="text-3xl font-bold text-center mb-6">🏡 Create New Listing</h1>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* Images Upload Section */}
-        <input
-          type="file"
-          multiple
-          onChange={(e) => setFiles([...e.target.files])}
-          accept="image/*"
-        />
-        <button
-          type="button"
-          onClick={handleImageSubmit}
-          className="p-2 bg-blue-600 text-white rounded-lg hover:opacity-90"
-          disabled={uploading}
-        >
-          {uploading ? "Uploading..." : "Upload Images"}
-        </button>
-        {imageUploadError && <p className="text-red-700">{imageUploadError}</p>}
-        <div className="flex gap-2 flex-wrap">
-          {formData.imageUrls.map((url, i) => (
-            <div key={i} className="relative">
-              <img src={url} alt={`listing-${i}`} className="h-20 w-20 object-cover rounded" />
-              <button
-                type="button"
-                onClick={() => handleDeleteImage(i)}
-                className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1"
-              >
-                X
-              </button>
-            </div>
-          ))}
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-5 bg-white shadow-md rounded-lg p-6"
+      >
+        {/* Upload */}
+        <div>
+          <label className="block font-medium">Upload Images (max 10)</label>
+          <input
+            type="file"
+            multiple
+            onChange={(e) => setFiles([...e.target.files])}
+            accept="image/*"
+            className="border rounded-md p-2 w-full"
+          />
+          <button
+            type="button"
+            onClick={handleImageSubmit}
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={uploading}
+          >
+            {uploading ? "Uploading..." : "Upload"}
+          </button>
+          {imageUploadError && <p className="text-red-600">{imageUploadError}</p>}
+          <div className="flex gap-3 mt-3 flex-wrap">
+            {formData.imageUrls.map((url, i) => (
+              <div key={i} className="relative">
+                <img
+                  src={url}
+                  alt=""
+                  className="h-24 w-24 object-cover rounded-lg border"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleDeleteImage(i)}
+                  className="absolute top-1 right-1 bg-red-600 text-white rounded-full px-2"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Listing Info Fields */}
+        {/* Info Fields */}
         <input
-          type="text"
           id="name"
           placeholder="Listing Name"
           value={formData.name}
           onChange={handleChange}
-          className="border p-3 rounded-lg"
+          className="w-full border p-3 rounded"
           required
         />
         <textarea
@@ -171,35 +188,35 @@ export default function CreateListing() {
           placeholder="Description"
           value={formData.description}
           onChange={handleChange}
-          className="border p-3 rounded-lg"
+          className="w-full border p-3 rounded"
           required
         />
         <input
-          type="text"
           id="address"
           placeholder="Address"
           value={formData.address}
           onChange={handleChange}
-          className="border p-3 rounded-lg"
+          className="w-full border p-3 rounded"
           required
         />
         <input
-          type="text"
           id="phone"
-          placeholder="Phone Number"
+          placeholder="Phone"
           value={formData.phone}
           onChange={handleChange}
-          className="border p-3 rounded-lg"
+          className="w-full border p-3 rounded"
           required
         />
-        <div className="flex gap-2">
+
+        {/* Options */}
+        <div className="flex gap-6">
           <label>
             <input
               type="radio"
               id="rent"
               checked={formData.type === "rent"}
               onChange={handleChange}
-            />
+            />{" "}
             Rent
           </label>
           <label>
@@ -208,76 +225,91 @@ export default function CreateListing() {
               id="sale"
               checked={formData.type === "sale"}
               onChange={handleChange}
-            />
+            />{" "}
             Sale
           </label>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-6">
           <label>
-            <input type="checkbox" id="parking" checked={formData.parking} onChange={handleChange} />
+            <input
+              type="checkbox"
+              id="parking"
+              checked={formData.parking}
+              onChange={handleChange}
+            />{" "}
             Parking
           </label>
           <label>
-            <input type="checkbox" id="furnished" checked={formData.furnished} onChange={handleChange} />
+            <input
+              type="checkbox"
+              id="furnished"
+              checked={formData.furnished}
+              onChange={handleChange}
+            />{" "}
             Furnished
           </label>
           <label>
-            <input type="checkbox" id="offer" checked={formData.offer} onChange={handleChange} />
+            <input
+              type="checkbox"
+              id="offer"
+              checked={formData.offer}
+              onChange={handleChange}
+            />{" "}
             Offer
           </label>
         </div>
-        <input
-          type="number"
-          id="bedrooms"
-          placeholder="Bedrooms"
-          value={formData.bedrooms}
-          onChange={handleChange}
-          className="border p-3 rounded-lg"
-          min={1}
-        />
-        <input
-          type="number"
-          id="bathrooms"
-          placeholder="Bathrooms"
-          value={formData.bathrooms}
-          onChange={handleChange}
-          className="border p-3 rounded-lg"
-          min={1}
-        />
-        <input
-          type="number"
-          id="regularPrice"
-          placeholder="Regular Price"
-          value={formData.regularPrice}
-          onChange={handleChange}
-          className="border p-3 rounded-lg"
-          min={0}
-        />
-        {formData.offer && (
+
+        {/* Numbers */}
+        <div className="grid grid-cols-2 gap-4">
           <input
             type="number"
-            id="discountPrice"
-            placeholder="Discount Price"
-            value={formData.discountPrice}
+            id="bedrooms"
+            value={formData.bedrooms}
             onChange={handleChange}
-            className="border p-3 rounded-lg"
-            min={0}
+            min="1"
+            className="border p-3 rounded"
           />
-        )}
+          <input
+            type="number"
+            id="bathrooms"
+            value={formData.bathrooms}
+            onChange={handleChange}
+            min="1"
+            className="border p-3 rounded"
+          />
+          <input
+            type="number"
+            id="regularPrice"
+            value={formData.regularPrice}
+            onChange={handleChange}
+            className="border p-3 rounded"
+          />
+          {formData.offer && (
+            <input
+              type="number"
+              id="discountPrice"
+              value={formData.discountPrice}
+              onChange={handleChange}
+              className="border p-3 rounded"
+            />
+          )}
+        </div>
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading || uploading}
-          className="p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
+          className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-60"
         >
           {loading ? "Creating..." : "Create Listing"}
         </button>
 
-        {error && <p className="text-red-700 mt-2">{error}</p>}
+        {error && <p className="text-red-600 text-center mt-2">{error}</p>}
       </form>
     </main>
   );
 }
+
 
 
 
