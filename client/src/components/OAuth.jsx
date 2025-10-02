@@ -4,7 +4,6 @@ import { useDispatch } from "react-redux";
 import { signInSuccess } from "../redux/user/userSlice";
 import { useNavigate } from "react-router-dom";
 
-// ✅ Use environment variable for API base URL
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export default function OAuth() {
@@ -18,7 +17,7 @@ export default function OAuth() {
 
       const result = await signInWithPopup(auth, provider);
 
-      // ✅ Fetch using base URL
+      // ✅ Call backend for Google auth
       const res = await fetch(`${API_BASE}/api/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -27,7 +26,7 @@ export default function OAuth() {
           email: result.user.email,
           photo: result.user.photoURL,
         }),
-        credentials: "include", // ✅ in case backend sets cookies/sessions
+        credentials: "include", // ✅ ensures cookies are sent
       });
 
       const data = await res.json();
@@ -36,6 +35,9 @@ export default function OAuth() {
         console.error("Google auth failed:", data.message);
         return;
       }
+
+      // ✅ Save JWT to localStorage if backend returns it
+      if (data.token) localStorage.setItem("token", data.token);
 
       dispatch(signInSuccess(data));
       navigate("/"); // ✅ redirect after success
@@ -54,3 +56,4 @@ export default function OAuth() {
     </button>
   );
 }
+

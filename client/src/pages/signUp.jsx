@@ -1,36 +1,39 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import OAuth from "../components/OAuth";
 
 export default function SignUp() {
-  // Handle form submission and input change events here
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    phone: "",
+    password: "",
+  });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+    setFormData({ ...formData, [e.target.id]: e.target.value.trim() });
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.username || !formData.email || !formData.password) {
+      setError("Please fill in all required fields");
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
-
-      if (!formData.username || !formData.email || !formData.password) {
-        setError("Please fill in all required fields");
-        setLoading(false);
-        return;
-      }
-
       const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
       const res = await fetch(`${API_BASE}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(formData),
       });
 
@@ -38,38 +41,31 @@ export default function SignUp() {
         const errorText = await res.text();
         try {
           const errorData = JSON.parse(errorText);
-          throw new Error(
-            errorData.message || `HTTP error! status: ${res.status}`
-          );
+          throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
         } catch {
           throw new Error(errorText || `HTTP error! status: ${res.status}`);
         }
       }
 
       const data = await res.json();
-      console.log("Signup success:", data);
 
       if (data.success === false) {
         setError(data.message);
-        setLoading(false);
         return;
       }
 
-      setLoading(false);
-      setError(null);
       navigate("/signin");
     } catch (error) {
-      setLoading(false);
       setError(error.message || "Something went wrong during signup");
-      console.error("Signup error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="p-3 max-w-lg mx-auto">
-      <h1 className=" text-3xl text-center font-semibold my-7 "> Sign Up</h1>
-      {/* Sign Up form */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 ">
+      <h1 className="text-3xl text-center font-semibold my-7">Sign Up</h1>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <input
           type="text"
           placeholder="Username"
@@ -107,14 +103,15 @@ export default function SignUp() {
         </button>
         <OAuth />
       </form>
-      {/* Already have an account? */}
+
       <div className="flex text-sm text-center gap-2 mt-5">
-        <p>Already have an account? </p>
-        <Link to="/signIn">
-          <span className="text-blue-700 ">Sign In</span>
+        <p>Already have an account?</p>
+        <Link to="/signin">
+          <span className="text-blue-700">Sign In</span>
         </Link>
       </div>
       {error && <p className="text-red-500 mt-5">{error}</p>}
     </div>
   );
 }
+

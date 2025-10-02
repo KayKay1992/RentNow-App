@@ -10,7 +10,6 @@ export default function SignIn() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
 
-  // ✅ Use environment variable for API base
   const API_BASE = import.meta.env.VITE_API_BASE_URL
 
   const handleChange = (e) => {
@@ -21,16 +20,23 @@ export default function SignIn() {
     e.preventDefault()
     try {
       dispatch(signInStart())
+
       const res = await fetch(`${API_BASE}/api/auth/signin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
+
       const data = await res.json()
 
       if (data.success === false) {
         dispatch(signInFailure(data.message))
         return
+      }
+
+      // ✅ Save token in localStorage for future authorized requests
+      if (data.token) {
+        localStorage.setItem('token', data.token)
       }
 
       dispatch(signInSuccess(data))

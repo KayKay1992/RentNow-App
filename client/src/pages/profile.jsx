@@ -30,9 +30,7 @@ export default function Profile() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (file) {
-      handleFileUpload(file);
-    }
+    if (file) handleFileUpload(file);
   }, [file]);
 
   const handleFileUpload = (file) => {
@@ -40,15 +38,14 @@ export default function Profile() {
     const fileName = new Date().getTime() + file.name;
     const storageRef = ref(storage, fileName);
     const uploadTask = uploadBytesResumable(storageRef, file);
+
     uploadTask.on(
       "state_changed",
       (snapshot) => {
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         setFilePercentage(Math.round(progress));
       },
-      () => {
-        setFileUploadError(true);
-      },
+      () => setFileUploadError(true),
       () => {
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           setFormData({ ...formData, avatar: downloadURL });
@@ -61,13 +58,22 @@ export default function Profile() {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
+  // 🔹 Update User
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!currentUser?.token) {
+      dispatch(updateUserFailure("You must be signed in to update profile."));
+      return;
+    }
+
     try {
       dispatch(updateUserStart());
       const res = await fetch(`${API_BASE}/api/user/update/${currentUser._id}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentUser.token}`,
+        },
         body: JSON.stringify(formData),
       });
       const data = await res.json();
@@ -82,11 +88,14 @@ export default function Profile() {
     }
   };
 
+  // 🔹 Delete User
   const handleDeleteUser = async () => {
+    if (!currentUser?.token) return;
     try {
       dispatch(deleteUserStart());
       const res = await fetch(`${API_BASE}/api/user/delete/${currentUser._id}`, {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${currentUser.token}` },
       });
       const data = await res.json();
       if (data.success === false) {
@@ -99,10 +108,14 @@ export default function Profile() {
     }
   };
 
+  // 🔹 Sign Out
   const handleSignOut = async () => {
+    if (!currentUser?.token) return;
     try {
       dispatch(signOutStart());
-      const res = await fetch(`${API_BASE}/api/auth/signout`);
+      const res = await fetch(`${API_BASE}/api/auth/signout`, {
+        headers: { Authorization: `Bearer ${currentUser.token}` },
+      });
       const data = await res.json();
       if (data.success === false) {
         dispatch(signOutFailure(data.message));
@@ -114,10 +127,14 @@ export default function Profile() {
     }
   };
 
+  // 🔹 Fetch User Listings
   const handleShowListings = async () => {
+    if (!currentUser?.token) return setShowListingsError(true);
     try {
       setShowListingsError(false);
-      const res = await fetch(`${API_BASE}/api/user/listings/${currentUser._id}`);
+      const res = await fetch(`${API_BASE}/api/user/listings/${currentUser._id}`, {
+        headers: { Authorization: `Bearer ${currentUser.token}` },
+      });
       const data = await res.json();
       if (data.success === false) {
         setShowListingsError(true);
@@ -129,10 +146,13 @@ export default function Profile() {
     }
   };
 
+  // 🔹 Delete Listing
   const handleListingDelete = async (listingId) => {
+    if (!currentUser?.token) return;
     try {
       const res = await fetch(`${API_BASE}/api/listing/delete/${listingId}`, {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${currentUser.token}` },
       });
       const data = await res.json();
       if (data.success === false) {
@@ -164,7 +184,7 @@ export default function Profile() {
         />
         <p className="text-sm self-center">
           {fileUploadError ? (
-            <span className="text-red-700">Error Image Upload, (image must be less than 2mb)</span>
+            <span className="text-red-700">Error Image Upload, (image must be less than 2MB)</span>
           ) : filePercentage > 0 && filePercentage < 100 ? (
             <span className="text-slate-700">{`Uploading ${filePercentage}%`}</span>
           ) : filePercentage === 100 ? (
@@ -173,6 +193,7 @@ export default function Profile() {
             ""
           )}
         </p>
+
         <input
           type="text"
           placeholder="Username"
@@ -184,8 +205,8 @@ export default function Profile() {
         <input
           type="email"
           placeholder="Email"
-          className="border p-3 rounded-lg"
           id="email"
+          className="border p-3 rounded-lg"
           defaultValue={currentUser.email}
           onChange={handleChange}
         />
@@ -196,12 +217,14 @@ export default function Profile() {
           id="password"
           onChange={handleChange}
         />
+
         <button
           disabled={loading}
           className="bg-slate-700 text-white rounded-lg uppercase p-3 hover:opacity-95 disabled:opacity-80"
         >
           {loading ? "Loading..." : "Update"}
         </button>
+
         <Link
           className="bg-green-700 text-white p-3 rounded-lg uppercase text-center hover:opacity-95"
           to={"/create-listing"}
@@ -222,14 +245,14 @@ export default function Profile() {
       <p className="text-red-700 mt-5">{error ? error : ""}</p>
       {updateSuccess && <p className="text-green-700 mt-5">Profile updated successfully!</p>}
 
-      <button onClick={handleShowListings} className="text-green-700 w-full">
+      <button onClick={handleShowListings} className="text-green-700 w-full mt-4">
         Show Listings
       </button>
       <p className="text-red-700 mt-5">{showListingsError ? "Error showing Listings" : ""}</p>
 
       {userListings && userListings.length > 0 && (
-        <div className="flex flex-col gap-4">
-          <h1 className="text-center mt-7 text-2xl font-semibold">Your Listings</h1>
+        <div className="flex flex-col gap-4 mt-5">
+          <h1 className="text-center text-2xl font-semibold">Your Listings</h1>
           {userListings.map((listing) => (
             <div
               key={listing._id}

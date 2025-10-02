@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   getDownloadURL,
   getStorage,
@@ -74,7 +74,6 @@ export default function CreateListing() {
     });
   };
 
-  // 🔹 Delete uploaded image from preview
   const handleDeleteImage = (i) => {
     setFormData((prev) => ({
       ...prev,
@@ -82,7 +81,6 @@ export default function CreateListing() {
     }));
   };
 
-  // 🔹 Handle input changes
   const handleChange = (e) => {
     const { id, value, checked } = e.target;
     if (id === "sale" || id === "rent") {
@@ -94,9 +92,15 @@ export default function CreateListing() {
     }
   };
 
-  // 🔹 Handle form submit with fixed auth
+  // 🔹 Handle form submit with Authorization header
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!currentUser?.token) {
+      setError("⚠️ You must be signed in to create a listing.");
+      return;
+    }
+
     if (formData.imageUrls.length < 1)
       return setError("⚠️ Upload at least one image.");
     if (+formData.discountPrice > +formData.regularPrice)
@@ -110,15 +114,18 @@ export default function CreateListing() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${currentUser.token}`,
         },
-        credentials: "include", // ✅ FIX: send cookies with request
         body: JSON.stringify({ ...formData, userRef: currentUser._id }),
       });
 
       const data = await res.json();
       setLoading(false);
 
-      if (data.success === false) return setError(data.message);
+      if (!res.ok || data.success === false) {
+        setError(data.message || "Failed to create listing");
+        return;
+      }
 
       navigate(`/listing/${data._id}`);
     } catch (err) {
@@ -309,6 +316,7 @@ export default function CreateListing() {
     </main>
   );
 }
+
 
 
 
