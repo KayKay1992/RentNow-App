@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { getDownloadURL, getStorage, ref, uploadBytesResumable } from "firebase/storage";
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
 import { app } from "../firebase";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
@@ -42,7 +47,8 @@ export default function Profile() {
     uploadTask.on(
       "state_changed",
       (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         setFilePercentage(Math.round(progress));
       },
       () => setFileUploadError(true),
@@ -68,14 +74,18 @@ export default function Profile() {
 
     try {
       dispatch(updateUserStart());
-      const res = await fetch(`${API_BASE}/api/user/update/${currentUser._id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${currentUser.token}`,
-        },
-        body: JSON.stringify(formData),
-      });
+      const res = await fetch(
+        `${API_BASE}/api/user/update/${currentUser._id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentUser.token}`,
+          },
+          credentials: "include",
+          body: JSON.stringify(formData),
+        }
+      );
       const data = await res.json();
       if (data.success === false) {
         dispatch(updateUserFailure(data.message));
@@ -93,10 +103,14 @@ export default function Profile() {
     if (!currentUser?.token) return;
     try {
       dispatch(deleteUserStart());
-      const res = await fetch(`${API_BASE}/api/user/delete/${currentUser._id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${currentUser.token}` },
-      });
+      const res = await fetch(
+        `${API_BASE}/api/user/delete/${currentUser._id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${currentUser.token}` },
+          credentials: "include",
+        }
+      );
       const data = await res.json();
       if (data.success === false) {
         dispatch(deleteUserFailure(data.message));
@@ -114,7 +128,9 @@ export default function Profile() {
     try {
       dispatch(signOutStart());
       const res = await fetch(`${API_BASE}/api/auth/signout`, {
+        method: "GET",
         headers: { Authorization: `Bearer ${currentUser.token}` },
+        credentials: "include",
       });
       const data = await res.json();
       if (data.success === false) {
@@ -132,9 +148,13 @@ export default function Profile() {
     if (!currentUser?.token) return setShowListingsError(true);
     try {
       setShowListingsError(false);
-      const res = await fetch(`${API_BASE}/api/user/listings/${currentUser._id}`, {
-        headers: { Authorization: `Bearer ${currentUser.token}` },
-      });
+      const res = await fetch(
+        `${API_BASE}/api/user/listings/${currentUser._id}`,
+        {
+          headers: { Authorization: `Bearer ${currentUser.token}` },
+          credentials: "include",
+        }
+      );
       const data = await res.json();
       if (data.success === false) {
         setShowListingsError(true);
@@ -153,13 +173,16 @@ export default function Profile() {
       const res = await fetch(`${API_BASE}/api/listing/delete/${listingId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${currentUser.token}` },
+        credentials: "include",
       });
       const data = await res.json();
       if (data.success === false) {
         console.log(data.message);
         return;
       }
-      setUserListings((prev) => prev.filter((listing) => listing._id !== listingId));
+      setUserListings((prev) =>
+        prev.filter((listing) => listing._id !== listingId)
+      );
     } catch (error) {
       console.log(error.message);
     }
@@ -184,7 +207,9 @@ export default function Profile() {
         />
         <p className="text-sm self-center">
           {fileUploadError ? (
-            <span className="text-red-700">Error Image Upload, (image must be less than 2MB)</span>
+            <span className="text-red-700">
+              Error Image Upload, (image must be less than 2MB)
+            </span>
           ) : filePercentage > 0 && filePercentage < 100 ? (
             <span className="text-slate-700">{`Uploading ${filePercentage}%`}</span>
           ) : filePercentage === 100 ? (
@@ -234,7 +259,10 @@ export default function Profile() {
       </form>
 
       <div className="flex justify-between mt-5">
-        <span onClick={handleDeleteUser} className="text-red-700 cursor-pointer">
+        <span
+          onClick={handleDeleteUser}
+          className="text-red-700 cursor-pointer"
+        >
           Delete Account
         </span>
         <span onClick={handleSignOut} className="text-red-700 cursor-pointer">
@@ -243,12 +271,19 @@ export default function Profile() {
       </div>
 
       <p className="text-red-700 mt-5">{error ? error : ""}</p>
-      {updateSuccess && <p className="text-green-700 mt-5">Profile updated successfully!</p>}
+      {updateSuccess && (
+        <p className="text-green-700 mt-5">Profile updated successfully!</p>
+      )}
 
-      <button onClick={handleShowListings} className="text-green-700 w-full mt-4">
+      <button
+        onClick={handleShowListings}
+        className="text-green-700 w-full mt-4"
+      >
         Show Listings
       </button>
-      <p className="text-red-700 mt-5">{showListingsError ? "Error showing Listings" : ""}</p>
+      <p className="text-red-700 mt-5">
+        {showListingsError ? "Error showing Listings" : ""}
+      </p>
 
       {userListings && userListings.length > 0 && (
         <div className="flex flex-col gap-4 mt-5">

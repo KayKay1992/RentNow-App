@@ -1,75 +1,88 @@
-import bcryptjs from 'bcryptjs'
-// import User from "../models/user.model.js";
-// import { errorHandler } from "../utils/error.js";
-import User from '../models/user.model.js';
-import { errorHandler } from '../utils/error.js';
-import Listing from '../models/listing.model.js';
+import bcryptjs from "bcryptjs";
+import User from "../models/user.model.js";
+import { errorHandler } from "../utils/error.js";
+import Listing from "../models/listing.model.js";
 
-
-
-export const test =(req, res) => {
-    res.status(200).json({ message: 'Test API is working!' });
-}
+export const test = (req, res) => {
+  res.status(200).json({ message: "Test API is working!" });
+};
 
 export const updateUser = async (req, res, next) => {
-    // Update user details in the database
-   if(req.user.id !== req.params.id) 
-    return next(errorHandler(401, "You are not Authenticated")) 
-   try {
-    if(req.body.password){
-        req.body.password = bcryptjs.hashSync(req.body.password, 10);
+  // Update user details in the database
+  if (req.user.id !== req.params.id)
+    return next(errorHandler(401, "You are not Authenticated"));
+  try {
+    if (req.body.password) {
+      req.body.password = bcryptjs.hashSync(req.body.password, 10);
     }
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      {
         $set: {
-            username: req.body.username,
-            email: req.body.email,
-            password: req.body.password,
-            avatar: req.body.avatar
-        }
-    }, {new: true});
-    const {password, ...rest} = updatedUser._doc;
-    res.status(200).json(rest);
+          username: req.body.username,
+          email: req.body.email,
+          password: req.body.password,
+          avatar: req.body.avatar,
+        },
+      },
+      { new: true }
+    );
+    const userObj = updatedUser.toObject();
+    const { password, ...rest } = userObj;
 
-   }catch(error){
+    // Get the token from request to return it back
+    let token = req.cookies.access_token;
+    if (!token && req.headers.authorization) {
+      token = req.headers.authorization.substring(7);
+    }
+
+    res.status(200).json({
+      ...rest,
+      token: token,
+      success: true,
+    });
+  } catch (error) {
     next(error);
-   }
-}
+  }
+};
 
-export const deleteUser =async(req, res, next) => {
-    // Delete user from the database
-    if(req.user.id !== req.params.id) 
-    return next(errorHandler(401, "You are not Authenticated")) 
-    try {
-        await User.findByIdAndDelete(req.params.id);
-        res.clearCookie('access_token');
-        res.status(200).json( "User deleted successfully");
-    } catch (error) {
-        next(error);
-    }
-}
- 
+export const deleteUser = async (req, res, next) => {
+  // Delete user from the database
+  if (req.user.id !== req.params.id)
+    return next(errorHandler(401, "You are not Authenticated"));
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.clearCookie("access_token");
+    res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getUserListings = async (req, res, next) => {
-    if(req.user.id === req.params.id){
-        try{
-            const listings = await Listing.find({userRef: req.params.id});
-            res.status(200).json(listings);
-
-        }catch(error){
-            next(error);
-        }
-
-    }else{
-        return next(errorHandler(401, "You can only view your own listings"))
+  if (req.user.id === req.params.id) {
+    try {
+      const listings = await Listing.find({ userRef: req.params.id });
+      res.status(200).json(listings);
+    } catch (error) {
+      next(error);
     }
-}
+  } else {
+    return next(errorHandler(401, "You can only view your own listings"));
+  }
+};
 
-export const getUser =  async (req, res, next) => {
-    try{
-        const user = await User.findById(req.params.id);
-        if(!user) return next(errorHandler(404, "User not found"));
-        const {password: pass, ...rest} = user._doc;
-        res.status(200).json(rest);
-    }catch(error){
-        next(error);
-    }
+export const getUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return next(errorHandler(404, "User not found"));
+    const userObj = user.toObject();
+    const { password: pass, ...rest } = userObj;
+    res.status(200).json(rest);
+  } catch (error) {
+    next(error);
+  }
 };
