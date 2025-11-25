@@ -22,6 +22,9 @@ import {
 } from "../redux/user/userSlice";
 
 export default function Profile() {
+  console.log("Profile page mounted");
+  // Log Redux state
+  // These variables are already declared below
   const navigate = useNavigate();
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
@@ -68,6 +71,7 @@ export default function Profile() {
 
   // 🔹 Update User
   const handleSubmit = async (e) => {
+    console.log("Submitting profile update:", formData);
     e.preventDefault();
     if (!currentUser?.token) {
       dispatch(updateUserFailure("You must be signed in to update profile."));
@@ -102,6 +106,7 @@ export default function Profile() {
 
   // 🔹 Delete User
   const handleDeleteUser = async () => {
+    console.log("Deleting user:", currentUser?._id);
     if (!currentUser?.token) return;
     try {
       dispatch(deleteUserStart());
@@ -126,6 +131,7 @@ export default function Profile() {
 
   // 🔹 Sign Out
   const handleSignOut = async () => {
+    console.log("Signing out user:", currentUser?._id);
     if (!currentUser?.token) return;
     try {
       dispatch(signOutStart());
@@ -149,6 +155,7 @@ export default function Profile() {
 
   // 🔹 Fetch User Listings
   const handleShowListings = async () => {
+    console.log("Fetching user listings for:", currentUser?._id);
     if (!currentUser?.token) return setShowListingsError(true);
     try {
       setShowListingsError(false);
