@@ -147,6 +147,7 @@ export default function Profile() {
       } else {
         dispatch(signOutSuccess(data));
       }
+      console.log("Navigating to /signin");
       navigate("/signin");
     } catch (error) {
       dispatch(signOutFailure(error.message));
