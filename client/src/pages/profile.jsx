@@ -144,9 +144,9 @@ export default function Profile() {
       console.log("Signout result:", data);
       if (data.success === false) {
         dispatch(signOutFailure(data.message));
-        return;
+      } else {
+        dispatch(signOutSuccess(data));
       }
-      dispatch(signOutSuccess(data));
       navigate("/signin");
     } catch (error) {
       dispatch(signOutFailure(error.message));
