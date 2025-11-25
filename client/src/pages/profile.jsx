@@ -8,6 +8,7 @@ import {
 import { app } from "../firebase";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   updateUserFailure,
   updateUserStart,
@@ -21,6 +22,7 @@ import {
 } from "../redux/user/userSlice";
 
 export default function Profile() {
+  const navigate = useNavigate();
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   const fileRef = useRef(null);
@@ -133,11 +135,13 @@ export default function Profile() {
         credentials: "include",
       });
       const data = await res.json();
+      console.log("Signout result:", data);
       if (data.success === false) {
         dispatch(signOutFailure(data.message));
         return;
       }
       dispatch(signOutSuccess(data));
+      navigate("/signin");
     } catch (error) {
       dispatch(signOutFailure(error.message));
     }
