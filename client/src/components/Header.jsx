@@ -48,7 +48,7 @@ export default function Header() {
             <FaSearch className=" text-slate-600" />
           </button>
         </form>
-        <ul className="flex gap-4">
+        <ul className="flex gap-4 items-center">
           <Link to="/">
             <li className="hidden sm:inline text-slate-700 hover:underline">
               Home
@@ -59,6 +59,18 @@ export default function Header() {
               About
             </li>
           </Link>
+          <button
+            onClick={() => navigate("/signin")}
+            className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => navigate("/signup")}
+            className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+          >
+            Sign Up
+          </button>
           <li
             className="cursor-pointer"
             onClick={() => {

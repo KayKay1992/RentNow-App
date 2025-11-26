@@ -131,7 +131,8 @@ export default function Profile() {
 
   // 🔹 Sign Out
   const handleSignOut = async () => {
-    console.log("Signing out user:", currentUser?._id);
+    console.log("SignOut button clicked");
+    console.log("currentUser token:", currentUser?.token);
     if (!currentUser?.token) return;
     try {
       dispatch(signOutStart());
